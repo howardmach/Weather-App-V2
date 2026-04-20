@@ -1,0 +1,10 @@
+No external libraries or packages need to be downloaded.
+
+This Weather App uses only:
+- HTML
+- CSS
+- JavaScript (vanilla, runs in the browser)
+- Open-Meteo public API (no API key required)
+
+You do not need to install any npm packages or Python libraries.
+Just open index.html in your browser.
