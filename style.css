@@ -154,20 +154,25 @@ body{
      border-radius: 75px;
 }
 
-.container .daily-cards .card{
-     width: 180px;
+.container .daily-cards .card {
+     /* Use flex properties to ensure they don't shrink and stay a consistent width */
+     flex: 0 0 140px; 
+     height: 200px; /* Set a fixed height for all cards */
+     
      display: flex;
-     justify-content: center;
+     justify-content: space-between; /* Evenly space elements inside the card */
      align-items: center;
      flex-direction: column;
      box-shadow: 0 5px 10px rgba(0,0,0,.5);
-     padding: 10px;
+     padding: 15px 10px; /* Increased vertical padding */
      border-radius: 10px;
      background: #fafafa;
 }
 
-.container .daily-cards .card p{
+/* Update this block in style.css */
+.container .daily-cards .card p {
      margin: 3px 0;
+     font-size: 1.1rem; /* Increased from default */
 }
 
 .container .daily-cards .card .temp{
@@ -180,11 +185,22 @@ body{
      height: 16px;
 }
 
-.container .daily-cards .card .temps{
+/* Replace the existing .container .daily-cards .card .temps block with this */
+.container .daily-cards .card .temps {
      display: flex;
-     justify-content: space-between;
+     justify-content: center; /* Changed to center to make the gap look even */
      align-items: center;
      width: 100%;
+     gap: 20px; /* This adds the space between High and Low */
+}
+
+.container .daily-cards .card .temp[title="Max"] {
+    color: #e67e22; /* Warm color for High */
+    font-weight: 600;
+}
+
+.container .daily-cards .card .temp[title="Min"] {
+    color: #3498db; /* Cool color for Low */
 }
 
 .errTxt{
