@@ -132,7 +132,6 @@ async function displayWeather(loc) {
     // 1. Hide the selection list and show that we are loading
     const locationSelector = document.getElementById("location-selector");
     locationSelector.style.display = "none";
-    errTxt.textContent = "Loading weather data...";
 
     try {
         // 2. Prepare API parameters based on current unit states
