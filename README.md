@@ -1,8 +1,7 @@
 # Weather App
 
 ## Overview
-This Weather App allows users to search for current weather and a 7-day forecast for any location worldwide. 
-Users can search by city name or zip code. The app also allows toggling between Celsius/Fahrenheit for temperature and km/h or mph for wind speed.
+This Weather App allows users to search for current weather and a 7-day forecast for any location worldwide. Users can search by city name or zip code. The app also allows toggling between Celsius/Fahrenheit for temperature and km/h or mph for wind speed.
 
 ## How to Run
 Open [weather-app-v2-lilac.vercel.app](https://weather-app-v2-lilac.vercel.app/)
