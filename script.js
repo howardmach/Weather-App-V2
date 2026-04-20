@@ -47,56 +47,76 @@ const celsiusRadio = document.getElementById('celsius');
 const fahrenheitRadio = document.getElementById('fahrenheit');
 const kmhRadio = document.getElementById('kmh');
 const mphRadio = document.getElementById('mph');
+const locationSelector = document.getElementById("location-selector");
+const locationList = document.getElementById("location-list");
 
 let currentTempUnit = 'celsius';
 let currentWindUnit = 'kmh';
+// Add this near your other 'let' variables
+let currentSelectedLoc = null;
 
 celsiusRadio.addEventListener('change', function() {
     if (this.checked) {
         currentTempUnit = 'celsius';
         unitSymbol.textContent = '°C';
-        if (window.lastQuery) searchBox.dispatchEvent(new Event('submit'));
+        // If a city is already being displayed, just refresh the data for that city
+        if (currentSelectedLoc) {
+            displayWeather(currentSelectedLoc);
+        }
     }
 });
+
 fahrenheitRadio.addEventListener('change', function() {
     if (this.checked) {
         currentTempUnit = 'fahrenheit';
         unitSymbol.textContent = '°F';
-        if (window.lastQuery) searchBox.dispatchEvent(new Event('submit'));
+        // If a city is already being displayed, just refresh the data for that city
+        if (currentSelectedLoc) {
+            displayWeather(currentSelectedLoc);
+        }
     }
 });
+
 kmhRadio.addEventListener('change', function() {
     if (this.checked) {
         currentWindUnit = 'kmh';
         windUnitElem.textContent = 'km/h';
-        if (window.lastQuery) searchBox.dispatchEvent(new Event('submit'));
+        // If a city is already being displayed, just refresh the data for that city
+        if (currentSelectedLoc) {
+            displayWeather(currentSelectedLoc);
+        }
     }
 });
+
 mphRadio.addEventListener('change', function() {
     if (this.checked) {
         currentWindUnit = 'mph';
         windUnitElem.textContent = 'mph';
-        if (window.lastQuery) searchBox.dispatchEvent(new Event('submit'));
+        // If a city is already being displayed, just refresh the data for that city
+        if (currentSelectedLoc) {
+            displayWeather(currentSelectedLoc);
+        }
     }
 });
 
-async function getLocation(location){
-     const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location.trim())}&count=1&language=en&format=json`);
+async function getLocations(location) {
+     const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location.trim())}&count=10&language=en&format=json`);
      const data = await res.json();
      if (!data.results || data.results.length === 0) throw new Error("Location Not Found");
-     const result = data.results[0];
-     return {
-          name: [result.name, result.admin1, result.country].filter(Boolean).join(', '),
+     
+     // Return formatted strings for the UI and raw data for coordinates
+     return data.results.map(result => ({
+          display: [result.name, result.admin1, result.country].filter(Boolean).join(', '),
           lat: result.latitude,
           lon: result.longitude
-     }
+     }));
 }
 
 async function getWeather(location){
      const {lat,lon,name} = await getLocation(location);
      const tempUnit = currentTempUnit === 'celsius' ? 'celsius' : 'fahrenheit';
      const windUnit = currentWindUnit;
-     const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=${tempUnit}&windspeed_unit=${windUnit}`);
+     const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=${tempUnit}&wind_speed_unit=${windUnit}`);
      const data = await res.json();
      return {
           name,
@@ -105,47 +125,114 @@ async function getWeather(location){
      }
 }
 
-searchBox.addEventListener("submit",async e=>{
-     e.preventDefault()
-     weatherDetailsElem.classList.remove("active")
-     dailyForecastElems.innerHTML = ""
-     if(locationInput.value.trim()===""){
-          errTxt.textContent = "Please Enter a Location To Get Weather Details"
+async function displayWeather(loc) {
+     // Save this location so unit toggles can reuse it
+    currentSelectedLoc = loc; 
+
+    // 1. Hide the selection list and show that we are loading
+    const locationSelector = document.getElementById("location-selector");
+    locationSelector.style.display = "none";
+    errTxt.textContent = "Loading weather data...";
+
+    try {
+        // 2. Prepare API parameters based on current unit states
+        const tempUnit = currentTempUnit === 'celsius' ? 'celsius' : 'fahrenheit';
+        const windUnit = currentWindUnit;
+
+        // 3. Fetch data from Open-Meteo
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=${tempUnit}&wind_speed_unit=${windUnit}`);
+        const data = await res.json();
+        
+        if (!data.current || !data.daily) throw new Error("Weather data unavailable");
+
+        // 4. Extract current weather details
+        const { temperature_2m, relative_humidity_2m, is_day, weather_code, wind_speed_10m } = data.current;
+        const weatherCondition = weather_codes[weather_code];
+        const imgSrc = `assets/${is_day ? weatherCondition.icons.day : weatherCondition.icons.night}`;
+
+        // 5. Update main UI elements
+        errTxt.textContent = "";
+        locationTxt.textContent = loc.display;
+        temperatureTxt.textContent = temperature_2m;
+        unitSymbol.textContent = currentTempUnit === 'celsius' ? '°C' : '°F';
+        windUnitElem.textContent = currentWindUnit === 'kmh' ? 'km/h' : 'mph';
+        humidityTxt.textContent = relative_humidity_2m;
+        windSpeedTxt.textContent = wind_speed_10m;
+        weatherCondName.textContent = weatherCondition.name;
+        weatherCondIcon.src = imgSrc;
+
+        // 6. Clear and populate the 7-day forecast
+        dailyForecastElems.innerHTML = "";
+        const { weather_code: daily_weather_code, temperature_2m_max, temperature_2m_min, time } = data.daily;
+
+        for (let i = 0; i < 7; i++) {
+            const dayCondition = weather_codes[daily_weather_code[i]];
+            const elem = document.createElement("div");
+            elem.className = "card";
+            elem.innerHTML = `
+                <img src="assets/${dayCondition.icons.day}" alt="weather-icon" width="100" height="100"/>
+                <div class="temps">
+                    <p class="temp" title="Max">${temperature_2m_max[i]}<span>${unitSymbol.textContent}</span></p>
+                    <p class="temp" title="Min">${temperature_2m_min[i]}<span>${unitSymbol.textContent}</span></p>
+                </div>
+                <p class="date">${time[i]}</p>`;
+            dailyForecastElems.appendChild(elem);
+        }
+
+        // 7. Reveal the weather details container
+        weatherDetailsElem.classList.add("active");
+
+    } catch (error) {
+        console.error(error);
+        errTxt.textContent = "Error fetching weather data. Please try again.";
+    }
+}
+
+searchBox.addEventListener("submit", async e => {
+     e.preventDefault();
+
+     // Clear the previous selection since the user is starting a brand new search
+     currentSelectedLoc = null;
+     
+     // 1. Reset the UI for a new search
+     weatherDetailsElem.classList.remove("active");
+     dailyForecastElems.innerHTML = "";
+     
+     // Ensure the new selection UI is hidden and cleared at the start of a search
+     const locationSelector = document.getElementById("location-selector");
+     const locationList = document.getElementById("location-list");
+     locationSelector.style.display = "none";
+     locationList.innerHTML = "";
+
+     if (locationInput.value.trim() === "") {
+          errTxt.textContent = "Please Enter a Location To Get Weather Details";
      } else {
-          errTxt.textContent = ""
-          try{
+          errTxt.textContent = "";
+          try {
                window.lastQuery = locationInput.value;
-               const weather = await getWeather(locationInput.value)
-               const {temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m} = weather.current
-               const {weather_code: daily_weather_code,temperature_2m_max,temperature_2m_min,time} = weather.daily
-               const weatherCondition = weather_codes[weather_code]
-               const imgSrc = `assets/${is_day ? weatherCondition.icons.day : weatherCondition.icons.night}`
-               locationTxt.textContent = weather.name
-               temperatureTxt.textContent = temperature_2m
-               unitSymbol.textContent = currentTempUnit === 'celsius' ? '°C' : '°F';
-               windUnitElem.textContent = currentWindUnit === 'kmh' ? 'km/h' : 'mph';
-               humidityTxt.textContent = relative_humidity_2m
-               windSpeedTxt.textContent = wind_speed_10m
-               weatherCondName.textContent = weatherCondition.name
-               weatherCondIcon.src = imgSrc
-               for(let i=0;i<7;i++){
-                    const weatherCond = weather_codes[daily_weather_code[i]]
-                    const temperatureMax = temperature_2m_max[i]
-                    const temperatureMin = temperature_2m_min[i]
-                    const timestamp = time[i] 
-                    const elem = document.createElement("div")
-                    elem.className = "card"
-                    elem.innerHTML = `<img src="assets/${weatherCond.icons.day}" alt="weather-icon" width="100" height="100"/>
-<div class="temps">
-     <p class="temp" title="Maximum Temperature">${temperatureMax}<span>${currentTempUnit === 'celsius' ? '°C' : '°F'}</span></p>
-     <p class="temp" title="Minimum Temperature">${temperatureMin}<span>${currentTempUnit === 'celsius' ? '°C' : '°F'}</span></p>
-</div>
-<p class="date">${timestamp}</p>`
-                    dailyForecastElems.appendChild(elem)
+               
+               // 2. Fetch potential matches instead of immediate weather
+               const locations = await getLocations(locationInput.value);
+               
+               if (locations.length > 1) {
+                    // 3. If multiple cities found, display the selection list
+                    locations.forEach(loc => {
+                         const li = document.createElement("li");
+                         li.textContent = loc.display;
+                         li.classList.add("location-option"); // You can style this in CSS
+                         li.onclick = () => {
+                              displayWeather(loc); // Call helper to fetch weather for this specific choice
+                              locationSelector.style.display = "none";
+                         };
+                         locationList.appendChild(li);
+                    });
+                    locationSelector.style.display = "block";
+               } else {
+                    // 4. If only one city is found, proceed immediately
+                    displayWeather(locations[0]);
                }
-               weatherDetailsElem.classList.add("active")
-          } catch {
-               errTxt.textContent = "Location Not Found"
+          } catch (error) {
+               errTxt.textContent = "Location Not Found";
           }
      }
-})
+});
