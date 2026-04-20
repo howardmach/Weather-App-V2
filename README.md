@@ -5,9 +5,7 @@ This Weather App allows users to search for current weather and a 7-day forecast
 Users can search by city name or zip code. The app also allows toggling between Celsius/Fahrenheit for temperature and km/h or mph for wind speed.
 
 ## How to Run
-1. **Clone or download this repository.**
-2. **Open `index.html` in your web browser.**
-   - No installation or server is required.
+Open [weather-app-v2-lilac.vercel.app](https://weather-app-v2-lilac.vercel.app/)
 
 ## Features
 - Search weather by city name or zip code.
