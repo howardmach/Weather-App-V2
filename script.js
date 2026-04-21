@@ -53,8 +53,11 @@ const geoBtn = document.getElementById("geo-btn");
 
 let currentTempUnit = 'celsius';
 let currentWindUnit = 'kmh';
+
 // Add this near your other 'let' variables
 let currentSelectedLoc = null;
+
+let lastFetchedData = null; // To store the Open-Meteo response
 
 celsiusRadio.addEventListener('change', function() {
     if (this.checked) {
@@ -100,9 +103,9 @@ mphRadio.addEventListener('change', function() {
     }
 });
 
+// Update this block in script.js
 geoBtn.addEventListener("click", () => {
     if (navigator.geolocation) {
-        // Show a brief message so the user knows it's working
         errTxt.textContent = "Requesting location access...";
         
         navigator.geolocation.getCurrentPosition(
@@ -112,7 +115,11 @@ geoBtn.addEventListener("click", () => {
                     lon: position.coords.longitude,
                     display: "Your Current Location"
                 };
-                displayWeather(loc); // Reuses your existing function
+                
+                // Clear the previous insight text so it doesn't show old data
+                document.getElementById("suggestion-text").textContent = "";
+                
+                displayWeather(loc); 
                 errTxt.textContent = ""; 
             },
             (error) => {
@@ -165,8 +172,10 @@ async function displayWeather(loc) {
         const windUnit = currentWindUnit;
 
         // 3. Fetch data from Open-Meteo
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=${tempUnit}&wind_speed_unit=${windUnit}`);
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max&temperature_unit=${tempUnit}&wind_speed_unit=${windUnit}`);
         const data = await res.json();
+
+        lastFetchedData = data; // Store the fetched data for insights
         
         if (!data.current || !data.daily) throw new Error("Weather data unavailable");
 
@@ -210,6 +219,13 @@ async function displayWeather(loc) {
     } catch (error) {
         console.error(error);
         errTxt.textContent = "Error fetching weather data. Please try again.";
+    }
+
+    if (loc.display === "Your Current Location") {
+        const insightBtn = document.getElementById("insight-btn");
+        if (insightBtn) {
+            insightBtn.click();
+        }
     }
 }
 
@@ -261,3 +277,57 @@ searchBox.addEventListener("submit", async e => {
           }
      }
 });
+
+document.getElementById("insight-btn").addEventListener("click", () => {
+    const suggestionElement = document.getElementById("suggestion-text");
+
+    // TOGGLE LOGIC: If text already exists, clear it and exit
+    if (suggestionElement.textContent !== "") {
+        suggestionElement.textContent = "";
+        return;
+    }
+
+    // Otherwise, generate the insight as usual
+    if (!lastFetchedData || !lastFetchedData.daily || !lastFetchedData.daily.wind_speed_10m_max) {
+        suggestionElement.textContent = "Please search for a city first!";
+        return;
+    }
+
+    const tomorrowData = {
+        tempMax: lastFetchedData.daily.temperature_2m_max[1],
+        weatherCode: lastFetchedData.daily.weather_code[1],
+        windSpeed: lastFetchedData.daily.wind_speed_10m_max[1]
+    };
+
+    const recommendation = getSmartActivity(tomorrowData, currentTempUnit, currentWindUnit);
+    suggestionElement.textContent = recommendation;
+});
+
+function getSmartActivity(tomorrow, tempUnit, windUnit) {
+    const { tempMax, weatherCode, windSpeed } = tomorrow;
+    
+    // Threshold Definitions
+    const coldThreshold = (tempUnit === 'celsius') ? 15 : 59;
+    const hotThreshold = (tempUnit === 'celsius') ? 32 : 90;
+    
+    // Wind threshold (approx 25 km/h or 15 mph is where it starts feeling "windy")
+    const windThreshold = (windUnit === 'kmh') ? 25 : 15;
+
+    // 1. Logic for Rain or Cold
+    if (weatherCode > 3 || tempMax < coldThreshold) { 
+        return "The forecast suggests indoor activities might be best tomorrow due to the cooler or unsettled conditions.";
+    }
+
+    // 2. Logic for High Wind
+    if (windSpeed > windThreshold) {
+        return "It looks quite windy tomorrow! You might prefer indoor settings or wind-shielded areas for your activities.";
+    }
+
+    // 3. Logic for High Heat
+    if (tempMax > hotThreshold) {
+        return "It's expected to be quite warm tomorrow; consider staying in a cooler environment.";
+    }
+
+    // 4. Default for Pleasant Weather
+    return "The weather looks favorable for outdoor activities!";
+}

@@ -11,9 +11,15 @@ Open [weather-app-v2-lilac.vercel.app](https://weather-app-v2-lilac.vercel.app/)
 - View current weather conditions and a 7-day forecast.
 - Toggle temperature units (°C/°F).
 - Toggle wind speed units (km/h or mph).
+- Toggle insights for next day.
 - Responsive interface.
 
 ## How It Was Created
 - **Frontend:** HTML, CSS, and vanilla JavaScript.
 - **Weather Data:** [Open-Meteo API](https://open-meteo.com/).
 - **No external libraries** are used.
+
+## Button Logos
+- magnifying glass - search
+- crosshair - geolocation
+- lightbulb - insights
