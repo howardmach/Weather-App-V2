@@ -41,7 +41,7 @@ body{
      border-radius: 10px;
      box-shadow: 0 5px 25px rgba(0,0,0,.5);
      width: 100%;
-     max-width: 512px;
+     max-width: 650px;
 }
 
 .container .search-box{
@@ -67,6 +67,7 @@ body{
      border: 1px solid #bbb;
      outline: none;
      transition: .3s;
+     padding: 0.7em; /* Increased padding for a larger feel */
 }
 
 .container .search-box input:focus{
@@ -139,7 +140,7 @@ body{
      display: flex;
      justify-content: flex-start;
      align-items: center;
-     max-width: 512px;
+     max-width: 650px;
      overflow-x: auto;
      padding: 15px;
      gap: 10px;
@@ -227,9 +228,9 @@ body{
     cursor: pointer;
 }
 
-@media screen and (max-width: 500px){
+@media screen and (max-width: 650px){
      .container .daily-cards{
-          max-width: 275px;
+          max-width: 100%;
      }
      .attr{
           width: 100%;
@@ -273,4 +274,22 @@ body{
 .location-option:hover {
     background-color: #f0f0f0;
     color: #1dd1a1;
+}
+
+#geo-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #1dd1a1;
+    background: #fff;
+    color: #1dd1a1;
+    cursor: pointer;
+    border-radius: 10px;
+    padding: 0.5em;
+    transition: .3s;
+}
+
+#geo-btn:hover {
+    background: #1dd1a1;
+    color: #fff;
 }

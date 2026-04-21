@@ -49,6 +49,7 @@ const kmhRadio = document.getElementById('kmh');
 const mphRadio = document.getElementById('mph');
 const locationSelector = document.getElementById("location-selector");
 const locationList = document.getElementById("location-list");
+const geoBtn = document.getElementById("geo-btn");
 
 let currentTempUnit = 'celsius';
 let currentWindUnit = 'kmh';
@@ -96,6 +97,31 @@ mphRadio.addEventListener('change', function() {
         if (currentSelectedLoc) {
             displayWeather(currentSelectedLoc);
         }
+    }
+});
+
+geoBtn.addEventListener("click", () => {
+    if (navigator.geolocation) {
+        // Show a brief message so the user knows it's working
+        errTxt.textContent = "Requesting location access...";
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const loc = {
+                    lat: position.coords.latitude,
+                    lon: position.coords.longitude,
+                    display: "Your Current Location"
+                };
+                displayWeather(loc); // Reuses your existing function
+                errTxt.textContent = ""; 
+            },
+            (error) => {
+                errTxt.textContent = "Location access denied or unavailable.";
+                console.error(error);
+            }
+        );
+    } else {
+        errTxt.textContent = "Geolocation is not supported by this browser.";
     }
 });
 
