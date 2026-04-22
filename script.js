@@ -47,12 +47,15 @@ const celsiusRadio = document.getElementById('celsius');
 const fahrenheitRadio = document.getElementById('fahrenheit');
 const kmhRadio = document.getElementById('kmh');
 const mphRadio = document.getElementById('mph');
+const mmRadio = document.getElementById('mm');
+const inchRadio = document.getElementById('inch');
 const locationSelector = document.getElementById("location-selector");
 const locationList = document.getElementById("location-list");
 const geoBtn = document.getElementById("geo-btn");
 
 let currentTempUnit = 'celsius';
 let currentWindUnit = 'kmh';
+let currentPrecipUnit = 'mm';
 
 // Add this near your other 'let' variables
 let currentSelectedLoc = null;
@@ -97,6 +100,24 @@ mphRadio.addEventListener('change', function() {
         currentWindUnit = 'mph';
         windUnitElem.textContent = 'mph';
         // If a city is already being displayed, just refresh the data for that city
+        if (currentSelectedLoc) {
+            displayWeather(currentSelectedLoc);
+        }
+    }
+});
+
+mmRadio.addEventListener('change', function() {
+    if (this.checked) {
+        currentPrecipUnit = 'mm';
+        if (currentSelectedLoc) {
+            displayWeather(currentSelectedLoc);
+        }
+    }
+});
+
+inchRadio.addEventListener('change', function() {
+    if (this.checked) {
+        currentPrecipUnit = 'in';
         if (currentSelectedLoc) {
             displayWeather(currentSelectedLoc);
         }
@@ -203,7 +224,11 @@ async function displayWeather(loc) {
             // Data Preparation
             const highTemp = Math.round(temperature_2m_max[i]);
             const lowTemp = Math.round(temperature_2m_min[i]);
-            const precip = daily_precipitation_sum[i];
+            const precipMm = daily_precipitation_sum[i] ?? 0;
+            const precipValue = currentPrecipUnit === 'in'
+                ? (precipMm / 25.4).toFixed(2)
+                : Math.round(precipMm * 10) / 10;
+            const precipUnitStr = currentPrecipUnit === 'in' ? 'in' : 'mm';
             const wind = Math.round(daily_wind_speed_10m_max[i]);
             const displayUnit = unitSymbol.textContent;
             const windUnitStr = currentWindUnit === 'kmh' ? 'km/h' : 'mph';
@@ -217,8 +242,8 @@ async function displayWeather(loc) {
                 </div>
                 <div class="card-details">
                     <div class="detail-item">
-                        <img src="assets/humidity.svg" class="card-icon" alt="precip">
-                        <span>${precip}mm</span>
+                        <img src="assets/rain.svg" class="card-icon" alt="precip">
+                        <span>${precipValue}${precipUnitStr}</span>
                     </div>
                     <div class="detail-item">
                         <img src="assets/wind.svg" class="card-icon" alt="wind">
