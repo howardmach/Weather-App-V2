@@ -154,26 +154,29 @@ body{
      border-radius: 75px;
 }
 
+/* Card Setup */
 .container .daily-cards .card {
-     flex: 1;
+    flex: 1;
     min-width: 0;
-    height: 210px; /* Increased height to accommodate larger icons + text */
+    height: 270px; /* Increased to fit everything */
     display: flex;
     flex-direction: column;
-    justify-content: space-around; /* Distributes date, icon, and temp evenly */
+    justify-content: space-between;
     align-items: center;
-    padding: 10px 2px; /* Less horizontal padding to give text more room */
-    box-sizing: border-box; /* Crucial: includes padding in the height/width calculation */
-     background: #fff;
-     border-radius: 10px;
-     box-shadow: 0 2px 10px rgba(0,0,0,.1);
-     transition: .3s;
+    padding: 12px 2px;
+    background: #fff;
+    border-radius: 12px;
+}
+
+.container .daily-cards .card:hover {
+    transform: translateY(-5px); /* Adds a nice "Data Science Dashboard" feel */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 /* Adjust image and text sizes inside cards to fit the smaller width */
 .container .daily-cards .card img {
-    width: 65px; 
-    height: 65px;
+    width: 60px; 
+    height: 60px;
     margin: 5px 0; /* Adds a little vertical breathing room */
 }
 
@@ -194,12 +197,15 @@ body{
 }
 
 .container .daily-cards .card .temps {
-    gap: 8px; /* Reduced gap between High/Low */
-    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column; /* Stacks the High above the Low */
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
 }
 
 .container .daily-cards .card .date {
-    font-size: 0.75rem; /* Slightly smaller to fit long day names like "Wednesday" */
+    font-size: 0.7rem; /* Slightly smaller to fit long day names like "Wednesday" */
     color: #777;
     text-align: center;
     white-space: nowrap; /* Prevents the date from splitting into two lines */
@@ -208,12 +214,12 @@ body{
     width: 100%;         /* Ensures it stays within the card boundaries */
 }
 
-.container .daily-cards .card .temp[title="Max"] {
+.container .daily-cards .card .highTemp {
     color: #e67e22; /* Warm color for High */
     font-weight: 600;
 }
 
-.container .daily-cards .card .temp[title="Min"] {
+.container .daily-cards .card .lowTemp {
     color: #3498db; /* Cool color for Low */
 }
 
@@ -343,4 +349,31 @@ body{
     color: #444;
     font-style: italic;
     padding: 0 10px;
+}
+
+/* Container for the small icons and text at the bottom of the card */
+.card-details {
+    display: flex;
+    flex-direction: column; /* Stacking vertically saves horizontal space */
+    gap: 4px;
+    width: 100%;
+    margin-top: 5px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0; /* Subtle line to separate from temps */
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.7rem; /* Small font size for secondary data */
+    color: #666;
+}
+
+/* Force icons inside the card to be tiny so they don't push the text out */
+.card-icon {
+    width: 12px !important;
+    height: 12px !important;
+    opacity: 0.7;
 }

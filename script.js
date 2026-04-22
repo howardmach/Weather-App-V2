@@ -172,13 +172,14 @@ async function displayWeather(loc) {
         const windUnit = currentWindUnit;
 
         // 3. Fetch data from Open-Meteo
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max&temperature_unit=${tempUnit}&wind_speed_unit=${windUnit}`);
+        // Add precipitation_sum to the daily section of the URL
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_sum&temperature_unit=${tempUnit}&wind_speed_unit=${windUnit}`);
         const data = await res.json();
 
         lastFetchedData = data; // Store the fetched data for insights
         
         if (!data.current || !data.daily) throw new Error("Weather data unavailable");
-
+        
         // 4. Extract current weather details
         const { temperature_2m, relative_humidity_2m, is_day, weather_code, wind_speed_10m } = data.current;
         const weatherCondition = weather_codes[weather_code];
@@ -187,7 +188,7 @@ async function displayWeather(loc) {
         // 5. Update main UI elements
         errTxt.textContent = "";
         locationTxt.textContent = loc.display;
-        temperatureTxt.textContent = temperature_2m;
+        temperatureTxt.textContent = Math.round(temperature_2m);
         unitSymbol.textContent = currentTempUnit === 'celsius' ? '°C' : '°F';
         windUnitElem.textContent = currentWindUnit === 'kmh' ? 'km/h' : 'mph';
         humidityTxt.textContent = relative_humidity_2m;
@@ -197,19 +198,47 @@ async function displayWeather(loc) {
 
         // 6. Clear and populate the 7-day forecast
         dailyForecastElems.innerHTML = "";
-        const { weather_code: daily_weather_code, temperature_2m_max, temperature_2m_min, time } = data.daily;
+        // ADD the two new variables to this list:
+        const { 
+            weather_code: daily_weather_code, 
+            temperature_2m_max, 
+            temperature_2m_min, 
+            time,
+            precipitation_sum: daily_precipitation_sum, // Add this
+            wind_speed_10m_max: daily_wind_speed_10m_max // Add this
+        } = data.daily;
 
         for (let i = 0; i < 7; i++) {
             const dayCondition = weather_codes[daily_weather_code[i]];
             const elem = document.createElement("div");
             elem.className = "card";
+
+            // Data Preparation
+            const highTemp = Math.round(temperature_2m_max[i]);
+            const lowTemp = Math.round(temperature_2m_min[i]);
+            const precip = daily_precipitation_sum[i];
+            const wind = Math.round(daily_wind_speed_10m_max[i]);
+            const displayUnit = unitSymbol.textContent;
+            const windUnitStr = currentWindUnit === 'kmh' ? 'km/h' : 'mph';
+
             elem.innerHTML = `
-                <img src="assets/${dayCondition.icons.day}" alt="weather-icon" width="100" height="100"/>
+                <p class="date">${time[i]}</p>
+                <img src="assets/${dayCondition.icons.day}" alt="weather-icon" />
                 <div class="temps">
-                    <p class="temp" title="Max">${temperature_2m_max[i]}<span>${unitSymbol.textContent}</span></p>
-                    <p class="temp" title="Min">${temperature_2m_min[i]}<span>${unitSymbol.textContent}</span></p>
+                    <p class="highTemp">${highTemp}${displayUnit}</p>
+                    <p class="lowTemp">${lowTemp}${displayUnit}</p>
                 </div>
-                <p class="date">${time[i]}</p>`;
+                <div class="card-details">
+                    <div class="detail-item">
+                        <img src="assets/humidity.svg" class="card-icon" alt="precip">
+                        <span>${precip}mm</span>
+                    </div>
+                    <div class="detail-item">
+                        <img src="assets/wind.svg" class="card-icon" alt="wind">
+                        <span>${wind}${windUnitStr}</span>
+                    </div>
+                </div>`;
+            
             dailyForecastElems.appendChild(elem);
         }
 
@@ -219,13 +248,6 @@ async function displayWeather(loc) {
     } catch (error) {
         console.error(error);
         errTxt.textContent = "Error fetching weather data. Please try again.";
-    }
-
-    if (loc.display === "Your Current Location") {
-        const insightBtn = document.getElementById("insight-btn");
-        if (insightBtn) {
-            insightBtn.click();
-        }
     }
 }
 
@@ -294,9 +316,11 @@ document.getElementById("insight-btn").addEventListener("click", () => {
     }
 
     const tomorrowData = {
-        tempMax: lastFetchedData.daily.temperature_2m_max[1],
+        // Rounding here ensures the "Heuristic Classifier" logic 
+        // uses the same numbers the user sees on the screen
+        tempMax: Math.round(lastFetchedData.daily.temperature_2m_max[1]),
         weatherCode: lastFetchedData.daily.weather_code[1],
-        windSpeed: lastFetchedData.daily.wind_speed_10m_max[1]
+        windSpeed: Math.round(lastFetchedData.daily.wind_speed_10m_max[1])
     };
 
     const recommendation = getSmartActivity(tomorrowData, currentTempUnit, currentWindUnit);
