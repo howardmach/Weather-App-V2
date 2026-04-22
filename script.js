@@ -329,5 +329,5 @@ function getSmartActivity(tomorrow, tempUnit, windUnit) {
     }
 
     // 4. Default for Pleasant Weather
-    return "The weather looks favorable for outdoor activities!";
+    return "The weather looks favorable for outdoor activities tomorrow!";
 }
