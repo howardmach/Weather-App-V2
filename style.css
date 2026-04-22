@@ -236,13 +236,22 @@ body{
 
 .unit-toggle {
     margin: 1em 0;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+    white-space: nowrap;
 }
 
 .unit-toggle label {
-    margin: 0 1em;
+    margin: 0 0.45em;
     font-size: 1.1em;
     cursor: pointer;
+}
+
+.unit-toggle .unit-divider {
+    margin: 0 0.35em;
 }
 
 @media screen and (max-width: 600px){
