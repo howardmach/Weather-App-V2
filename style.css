@@ -208,10 +208,8 @@ body{
     font-size: 0.7rem; /* Slightly smaller to fit long day names like "Wednesday" */
     color: #777;
     text-align: center;
-    white-space: nowrap; /* Prevents the date from splitting into two lines */
-    overflow: hidden;    /* Clips any accidental overflow */
-    text-overflow: ellipsis; /* Adds "..." if it absolutely won't fit */
-    width: 100%;         /* Ensures it stays within the card boundaries */
+    width: 100%;
+    line-height: 1.2;
 }
 
 .container .daily-cards .card .highTemp {

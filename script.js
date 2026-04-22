@@ -145,19 +145,6 @@ async function getLocations(location) {
      }));
 }
 
-async function getWeather(location){
-     const {lat,lon,name} = await getLocation(location);
-     const tempUnit = currentTempUnit === 'celsius' ? 'celsius' : 'fahrenheit';
-     const windUnit = currentWindUnit;
-     const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=${tempUnit}&wind_speed_unit=${windUnit}`);
-     const data = await res.json();
-     return {
-          name,
-          current: data.current,
-          daily: data.daily
-     }
-}
-
 async function displayWeather(loc) {
      // Save this location so unit toggles can reuse it
     currentSelectedLoc = loc; 
